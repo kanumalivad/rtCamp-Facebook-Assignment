@@ -16,7 +16,65 @@
     $accessToken= $_SESSION['facebook_access_token'];
     $response= $fb->get('/me?fields=albums',$accessToken);
     $user = $response->getGraphUser();
-  }
+
+    if(isset($_GET['albumid']))
+    {
+      $downloadLinks="";
+      $albumIds=explode("_",$_GET['albumid']);
+
+        if($albumIds[0]!=""){
+          $album_img2= $fb->get('/'.$albumIds[0].'/photos?limit=500',$accessToken);
+          $user2 = $album_img2->getGraphEdge();
+
+          $zip = new ZipArchive;
+          
+          if ($zip->open('tmp/'.$albumIds[1].'.zip', ZIPARCHIVE::CREATE) != TRUE) {
+              die ("Could not open archive");
+          }
+
+          for($j=0;$j<count($user2);$j++){
+            $album_img3= $fb->get('/'.$user2[$j]['id'].'?fields=images',$accessToken);
+            $user3 = $album_img3->getGraphNode();
+            $im=$user3['images'][0];
+            $zip->addFromString($j.'.jpg', file_get_contents($im['source']));
+          }
+          $zip->close();
+          $downloadLinks=$downloadLinks.'_tmp/'.$albumIds[1].'.zip';
+          
+          echo '<iframe src="download.php?link='.basename($downloadLinks).'" id="ifame" style="display : none"></iframe>';
+          }
+    }
+    else if(isset($_GET['albumids']))
+    {
+      $downloadLinks="tmp/MyGallery.zip";
+      $albumIds=explode("_",$_GET['albumids']);
+
+       $zip = new ZipArchive;
+          
+      if ($zip->open('tmp/MyGallery.zip', ZIPARCHIVE::CREATE) != TRUE) {
+          die ("Could not open archive");
+      }
+
+      for($i=0;$i<count($albumIds)-1;$i+=2)
+      {
+        $zip->addEmptyDir($albumIds[$i+1]);
+
+        if($albumIds[0]!=""){
+          $album_img2= $fb->get('/'.$albumIds[$i].'/photos?limit=500',$accessToken);
+          $user2 = $album_img2->getGraphEdge();
+
+          for($j=0;$j<count($user2);$j++){
+            $album_img3= $fb->get('/'.$user2[$j]['id'].'?fields=images',$accessToken);
+            $user3 = $album_img3->getGraphNode();
+            $im=$user3['images'][0];
+            $zip->addFromString($albumIds[$i+1].'/'.$j.'.jpg', file_get_contents($im['source']));
+          }
+          }
+        }
+         $zip->close();
+        echo '<iframe src="download.php?link='.basename($downloadLinks).'" id="ifame" style="display : none"></iframe>';
+      }
+}
   catch(Facebook\Exceptions\FacebookResponseException $e) {
     echo $e->getMessage();
   } catch(Facebook\Exceptions\FacebookSDKException $e) {
@@ -36,6 +94,9 @@
 
   </head>
   <style type="text/css">
+  body {
+      background-color:#81D4FA;
+  }
     .items {
     margin: 2%;
     overflow: hidden;
@@ -51,7 +112,6 @@
     -webkit-transform: scale(1.1);
     transform: scale(1.1);
   }
-
   #btngroup {
     position: fixed;
     bottom: 10px;
@@ -68,6 +128,17 @@
   .carousel-inner img {
     margin: auto;
 } 
+  .card-img-top{
+    height: 350px;
+  }
+   .modal-full {
+    min-width: 100%;
+    margin: 0;
+}
+
+.modal-full .modal-content {
+    min-height: 100vh;
+}
   </style>
   <body>
     <div class="text-center">
@@ -93,14 +164,14 @@
                   ?>
                   <div class="col-md-4">
                     <div class="card mb-4 box-shadow items" >
-                      <img class="card-img-top" src="<?php echo $coverPhoto['source'] ?>" alt="Card image cap" onclick="openSlider('<?php echo $user['albums'][$i]['id']  ?>')">
+                      <img class="card-img-top" src="<?php echo $coverPhoto['source'] ?>" alt="Card image cap" onclick="displaySlider('<?php echo $user['albums'][$i]['id']  ?>')">
                       <div class="card-body">
                         <p class="card-text" style="font-size: 18px;">
-                        <input type="checkbox" name="chk" value="<?php echo $user['albums'][$i]['id'] ?>">&nbsp;
+                        <input type="checkbox" name="chk" value="<?php echo $user['albums'][$i]['id'].'_'.$user['albums'][$i]['name']  ?>">&nbsp;
                         <?php echo $user['albums'][$i]['name'] ?></p>
                         <div class="d-flex justify-content-between align-items-center">
                           <div class="btn-group">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadAlbum('<?php echo $user['albums'][$i]['id']  ?>')"></span>Download</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadAlbum('<?php echo $user['albums'][$i]['id'].'_'.$user['albums'][$i]['name']  ?>')"></span>Download</button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="moveAlbum('<?php echo $user['albums'][$i]['id'].'_'.$user['albums'][$i]['name']  ?>')">Move to Drive</button>
                           </div>
                         </div>
@@ -115,11 +186,11 @@
         </div>
       </div>
       <div id="btngroup">
-        <button type="button" class="btn btn-primary" onclick="downloadSelectedAlbums()">Download Selected</button>
-        <button type="button" class="btn btn-primary" onclick="downloadAllAlbums()">Download All</button>
-        <button type="button" class="btn btn-primary" onclick="moveSelectedAlbums()">Move Selected</button>
-        <button type="button" class="btn btn-primary" onclick="moveAllAlbums()">Move All</button>
-        <button type="button" class="btn btn-danger" onclick="logout()">Logout</button>
+        <button type="button" class="btn btn-primary" id="download_seleted" onclick="downloadSelectedAlbums()">Download Selected</button>
+        <button  class="btn btn-primary" onclick="downloadAllAlbums()">Download All</button>
+        <button  class="btn btn-primary" onclick="moveSelectedAlbums()">Move Selected</button>
+        <button  class="btn btn-primary" onclick="moveAllAlbums()">Move All</button>
+        <button  class="btn btn-danger" onclick="logout()">Logout</button>
       </div>
 
       <center style="margin:auto;" class="h-100 row align-items-center">
@@ -133,6 +204,31 @@
         </div>
       </center>
 
+  <div class="modal" id="mySlider">
+    <div class="modal-dialog modal-full" role="document">
+        <div class="modal-content">
+            <div id="demo" class="carousel slide" data-ride="carousel">
+            <div class="carousel-inner" id="img-container">
+  
+            </div>
+            <a class="carousel-control-prev" href="#demo" data-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </a>
+            <a class="carousel-control-next" href="#demo" data-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </a>
+          </div>
+        </div>
+    </div>
+</div>
+
+<form action="" id="myFormSignle" method="get">
+  <input type="hidden" name="albumid" id="newid">
+</form>
+
+<form action="" id="myFormMultiple" method="get">
+  <input type="hidden" name="albumids" id="newids">
+</form>
 
 </body>
 </html>
@@ -157,75 +253,79 @@
     document.getElementById("move_selected").disabled = true; 
   }
   function downloadAlbum(id){
-    alert(id);
-    $("#msg").html("Downloading....");
     $('#myModal').modal('toggle');
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-      if (this.readyState == 4 && this.status == 200) {
-        $('#myModal').modal('toggle');
-        var links=this.responseText.split("_");
-        for(var i=0;i<links.length;i++){
-          if(links[i]!=""){
-            window.open(links[i],"_blank");
-          }
-        }
-      }
-    };
-    xhttp.open("GET", "download.php?albumid="+id, true);
-    xhttp.send();
+    var idField=document.getElementById("newid");
+    idField.value=id;
+     document.getElementById("myFormSignle").submit();
+     $('#myModal').modal('toggle');
   }
   function downloadSelectedAlbums(){
-    var selected_chk=document.querySelectorAll('input[name=chk]:checked');
-    $("#msg").html("Downloading....");
-    $('#myModal').modal('toggle');
-    var selctedAlbums="";
-    for(var i=0;i<selected_chk.length;i++){
-      selctedAlbums=selctedAlbums+selected_chk[i].value+"_";
-    }
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-      if (this.readyState == 4 && this.status == 200) {
-        var links=this.responseText.split("_");
-        for(var i=0;i<links.length;i++){
-          if(links[i]!=""){
-            window.open(links[i],"_blank");
-          }
-        }
-        $('#myModal').modal('toggle');
+    alert("clil");
+       $('#myModal').modal('toggle');
+      var selected_chk=document.querySelectorAll('input[name=chk]:checked');
+      var selctedAlbums="";
+      var idField=document.getElementById("newids");
+      for(var i=0;i<selected_chk.length;i++)
+      {
+           selctedAlbums=selctedAlbums+selected_chk[i].value+"_";
       }
-    };
-    xhttp.open("GET", "download.php?albumid="+selctedAlbums, true);
-    xhttp.send();
+
+         idField.value=selctedAlbums;
+         document.getElementById("myFormMultiple").submit();
+         $('#myModal').modal('toggle');
+   
   }
   function downloadAllAlbums(){
+       $('#myModal').modal('toggle');
     var selected_chk=document.querySelectorAll('input[name=chk]');
-    $("#msg").html("Downloading....");
-    $('#myModal').modal('toggle');
     var selctedAlbums="";
+     var idField=document.getElementById("newids");
     for(var i=0;i<selected_chk.length;i++)
     {
-      selctedAlbums=selctedAlbums+selected_chk[i].value+"_";
+         selctedAlbums=selctedAlbums+selected_chk[i].value+"_";
     }
-    $('#myModal').modal('toggle');
+
+         idField.value=selctedAlbums;
+         document.getElementById("myFormMultiple").submit();
+         $('#myModal').modal('toggle');
+   
+  }
+    function displaySlider(id){
+    
+     document.getElementById("img-container").innerHTML = '';
+
+     $("#img-container").append("<div class='carousel-item active'><img src='images/wc.jpg' style='height : 100vh; width:100% '></div>");
+    loadImages(id);
+   // doFS();
+    $('#mySlider').modal('toggle');
+  }
+
+  function loadImages(id)
+  {
+    albumid=id;
     var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-      if (this.readyState == 4 && this.status == 200) {
-        $('#myModal').modal('toggle');
-        var links=this.responseText.split("_");
-        for(var i=0;i<links.length;i++){
-          if(links[i]!=""){
-            window.open(links[i],"_blank");
+      xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200)
+        {
+          var arr=this.responseText.split(',');
+          for(var i=0;i<arr.length-1;i++)
+          {
+             var xhttp = new XMLHttpRequest();
+             xhttp.onreadystatechange = function() {
+              if (this.readyState == 4 && this.status == 200) 
+              {     
+                 $("#img-container").append(" <div class='carousel-item'> <img src='"+this.responseText+"' style='height : 100vh; position: absolute; z-index:-1; width:100%; filter: blur(10px);'><img src='"+this.responseText+"' class='mx-auto d-block' style='height:100vh;'> </div>");
+               }
+            };
+            xhttp.open("GET", "load-album.php?imageid="+arr[i], true);
+            xhttp.send();
           }
         }
-      }
-    };
-    xhttp.open("GET", "download.php?albumid="+selctedAlbums, true);
-    xhttp.send();
+      };
+      xhttp.open("GET", "get-Images.php?albumid="+id, true);
+      xhttp.send(); 
   }
-  function openSlider(id){
-    window.location="http://localhost/rtCamp/slider.php?albumid="+id;
-  }
+
   function moveAlbum(id){
     var c=getCookie('credentials');
     if(c!="")
@@ -249,6 +349,7 @@
       xhttp.send();
     }
     else
+      
     {
       window.location="http://localhost/rtCamp/save-credentials.php";
     }
@@ -281,4 +382,38 @@
       moveAlbum(selected_chk[i].value);
     }
   }
+
+  function doFS(){
+    var elem = document.getElementById("mySlider");
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.mozRequestFullScreen) { /* Firefox */
+    elem.mozRequestFullScreen();
+  } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) { /* IE/Edge */
+    elem.msRequestFullscreen();
+  }
+ } 
+
+if (document.addEventListener)
+  {
+    document.addEventListener('webkitfullscreenchange', exitHandler, false);
+    document.addEventListener('mozfullscreenchange', exitHandler, false);
+    document.addEventListener('fullscreenchange', exitHandler, false);
+    document.addEventListener('MSFullscreenChange', exitHandler, false);
+  }
+  var a=0;
+  function exitHandler()
+  {
+    if(document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement !== null){
+       if(a==0)
+          a=1;
+      else{
+        $('#mySlider').modal('toggle');
+        a=0;
+      }
+    }
+  }
+
 </script>
