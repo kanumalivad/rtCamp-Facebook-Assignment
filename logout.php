@@ -35,11 +35,7 @@
     return '';
   }
 	delete_cookie('credentials');
-<<<<<<< HEAD
 	window.location='".DOMAIN."'; 
-=======
-	window.location='https://localhost/rtCamp/index.php'; 
->>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
 	</script>";
 
 

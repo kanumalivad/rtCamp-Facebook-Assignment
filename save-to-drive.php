@@ -93,10 +93,6 @@
   	}
   }
   else{
-<<<<<<< HEAD
     header("Location :".DOMAIN."save-credentials.php");
-=======
-    header("Location : http://localhost/rtCamp/save-credentials.php");
->>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
   }
 ?>

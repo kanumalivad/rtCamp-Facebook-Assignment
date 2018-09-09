@@ -235,11 +235,7 @@
 <script type="text/javascript">
   //disableAllButton();
   function logout(){
-<<<<<<< HEAD
     window.location="logout.php";
-=======
-    window.location="https://localhost/rtCamp/logout.php";
->>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
   }
   function onoff(){
     var selected_chk=document.querySelectorAll('input[name=chk]:checked');
@@ -264,10 +260,6 @@
      $('#myModal').modal('toggle');
   }
   function downloadSelectedAlbums(){
-<<<<<<< HEAD
-=======
-    alert("clil");
->>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
        $('#myModal').modal('toggle');
       var selected_chk=document.querySelectorAll('input[name=chk]:checked');
       var selctedAlbums="";
@@ -358,11 +350,7 @@
     else
       
     {
-<<<<<<< HEAD
       window.location="save-credentials.php";
-=======
-      window.location="http://localhost/rtCamp/save-credentials.php";
->>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
     }
   }
   function getCookie(cname) {
