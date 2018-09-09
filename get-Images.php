@@ -14,7 +14,11 @@ require_once('fb-config.php');
     ]);
 try {
   $re = $fb->get(
+<<<<<<< HEAD
             '/'.$_GET['albumid'].'/photos?limit=500',
+=======
+            '/'.$_GET['albumid'].'/photos?limit=100',
+>>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
             $accessToken
           );
         $graphEdge = $re->getGraphEdge();

@@ -1,8 +1,13 @@
 <?php 
+<<<<<<< HEAD
 
 	session_start();
 	require_once('fb-config.php');
 	
+=======
+	session_start();
+
+>>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
 	if(isset($_SESSION['facebook_access_token']))
 		unset($_SESSION['facebook_access_token']);
 
@@ -35,7 +40,11 @@
     return '';
   }
 	delete_cookie('credentials');
+<<<<<<< HEAD
 	window.location='".DOMAIN."'; 
+=======
+	window.location='https://localhost/rtCamp/index.php'; 
+>>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
 	</script>";
 
 

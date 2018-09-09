@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
   
   require_once('fb-config.php');
   session_start();
@@ -19,6 +20,28 @@
 
   if(isset($_SESSION['facebook_access_token']))
       header('location:'.DOMAIN.'my-albums.php');
+=======
+    require_once('fb-config.php');
+    session_start();
+
+    $fb = new Facebook\Facebook([
+      'app_id' => APP_ID, // Replace {app-id} with your app id
+      'app_secret' => APP_SECRET,
+      'default_graph_version' => 'v2.2',
+      'default_access_token' => isset($_SESSION['facebook_access_token']) ? $_SESSION['facebook_access_token']  : APP_SECRET
+    ]);
+
+    $helper = $fb->getRedirectLoginHelper();
+    $permissions=['email','user_photos'];
+    $loginUrl= $helper->getLoginUrl(REDIRECT_URL,$permissions);
+
+    $accessToken= $helper->getAccessToken();
+    if(isset($accessToken))
+        $_SESSION['facebook_access_token']= (string) $accessToken;
+
+    if(isset($_SESSION['facebook_access_token']))
+        header('location:http://localhost/RtCamp/my-albums.php');
+>>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
     
 ?>
 <!DOCTYPE html>

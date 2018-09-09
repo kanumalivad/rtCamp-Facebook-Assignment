@@ -69,16 +69,34 @@ function getCredentials($authorizationCode, $state) {
 	$emailAddress = '';
 	try {
 		$credentials = exchangeCode($authorizationCode);
+<<<<<<< HEAD
 		
+=======
+>>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
 		$userInfo = getUserInfo($credentials);
 		$emailAddress = $userInfo->getEmail();
 		$userId = $userInfo->getId();
 		$credentialsArray = json_decode($credentials, true);
+<<<<<<< HEAD
 	    
 	    storeCredentials($userId, $credentials, $userInfo);
 
 			return $credentials;
 	
+=======
+		if (isset($credentialsArray['refresh_token'])) {
+			storeCredentials($userId, $credentials, $userInfo);
+			return $credentials;
+		} else {
+			$credentials = getStoredCredentials($userId);
+			if ($credentials != null && isset($credentials)) {
+				storeCredentials($userId, $credentials, $userInfo);
+			return $credentials;
+		} else {
+			echo "Unexpected error.";die;
+		}
+	}
+>>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
 } catch (CodeExchangeException $e) {
 	print 'An error occurred during code exchange.';
 	$e->setAuthorizationUrl(getAuthorizationUrl($emailAddress, $state));
