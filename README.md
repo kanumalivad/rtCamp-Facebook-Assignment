@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# rtCamp-Facebook-Assignment
-=======
 # rtCamp-Facebook-Assignment
 
 PART 1 :
@@ -35,4 +32,3 @@ Library Used:
 Facebook PHP SDK
 Google Drive API
 Bootstrap
->>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7

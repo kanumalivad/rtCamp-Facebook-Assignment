@@ -1,8 +1,4 @@
-<<<<<<< HEAD
   <?php
-=======
-<?php
->>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
 
   require_once 'lib/google-api-php-client/src/Google/Client.php';
   require_once 'lib/google-api-php-client/src/Google/Service/Oauth2.php';

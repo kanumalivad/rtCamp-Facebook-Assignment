@@ -3,11 +3,7 @@
   require_once('fb-config.php');
 
   if(!isset($_SESSION['facebook_access_token']))
-<<<<<<< HEAD
         header('location:'.DOMAIN);
-=======
-        header('location:http://localhost/RtCamp/index.php');
->>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
 
   $fb = new Facebook\Facebook([
     'app_id' => APP_ID, // Replace {app-id} with your app id

@@ -1,10 +1,7 @@
 <?php
 	require_once("functions.php");
 	session_start();
-<<<<<<< HEAD
 	require_once('fb-config.php');
-=======
->>>>>>> 08d220881b4581cf07b5796bcb7c3fc6f425c2c7
 
 	header('Content-Type: text/html; charset=utf-8');
 
