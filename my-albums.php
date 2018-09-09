@@ -28,7 +28,7 @@
 
           $zip = new ZipArchive;
           
-          if ($zip->open('tmp/'.$albumIds[1].'.zip', ZIPARCHIVE::CREATE) != TRUE) {
+          if ($zip->open('tmp/'.str_replace(" ","_",$albumIds[1]).'.zip', ZIPARCHIVE::CREATE) != TRUE) {
               die ("Could not open archive");
           }
 
@@ -40,6 +40,7 @@
           }
           $zip->close();
           $downloadLinks=$downloadLinks.'_tmp/'.$albumIds[1].'.zip';
+          $downloadLinks=str_replace(" ","_",$downloadLinks);
           
           echo '<iframe src="download.php?link='.basename($downloadLinks).'" id="ifame" style="display : none"></iframe>';
           }
