@@ -11,76 +11,24 @@
     'default_graph_version' => 'v2.2',
     'default_access_token' => isset($_SESSION['facebook_access_token']) ? $_SESSION['facebook_access_token']  : APP_SECRET
     ]);
+
+  if(isset($_GET['download']))
+  {
+    echo '<iframe src="download.php?link='.$_GET['download'].'" id="ifame" style="display : none"></iframe>';
+  }
   try
   { 
     $accessToken= $_SESSION['facebook_access_token'];
     $response= $fb->get('/me?fields=albums',$accessToken);
     $user = $response->getGraphUser();
 
-    if(isset($_GET['albumid']))
-    {
-      $downloadLinks="";
-      $albumIds=explode("_",$_GET['albumid']);
-
-        if($albumIds[0]!=""){
-          $album_img2= $fb->get('/'.$albumIds[0].'/photos?limit=500',$accessToken);
-          $user2 = $album_img2->getGraphEdge();
-
-          $zip = new ZipArchive;
-          
-          if ($zip->open('tmp/'.str_replace(" ","_",$albumIds[1]).'.zip', ZIPARCHIVE::CREATE) != TRUE) {
-              die ("Could not open archive");
-          }
-
-          for($j=0;$j<count($user2);$j++){
-            $album_img3= $fb->get('/'.$user2[$j]['id'].'?fields=images',$accessToken);
-            $user3 = $album_img3->getGraphNode();
-            $im=$user3['images'][0];
-            $zip->addFromString($j.'.jpg', file_get_contents($im['source']));
-          }
-          $zip->close();
-          $downloadLinks=$downloadLinks.'_tmp/'.$albumIds[1].'.zip';
-          $downloadLinks=str_replace(" ","_",$downloadLinks);
-          
-          echo '<iframe src="download.php?link='.basename($downloadLinks).'" id="ifame" style="display : none"></iframe>';
-          }
-    }
-    else if(isset($_GET['albumids']))
-    {
-      $downloadLinks="tmp/MyGallery.zip";
-      $albumIds=explode("_",$_GET['albumids']);
-
-       $zip = new ZipArchive;
-          
-      if ($zip->open('tmp/MyGallery.zip', ZIPARCHIVE::CREATE) != TRUE) {
-          die ("Could not open archive");
-      }
-
-      for($i=0;$i<count($albumIds)-1;$i+=2)
-      {
-        $zip->addEmptyDir($albumIds[$i+1]);
-
-        if($albumIds[0]!=""){
-          $album_img2= $fb->get('/'.$albumIds[$i].'/photos?limit=500',$accessToken);
-          $user2 = $album_img2->getGraphEdge();
-
-          for($j=0;$j<count($user2);$j++){
-            $album_img3= $fb->get('/'.$user2[$j]['id'].'?fields=images',$accessToken);
-            $user3 = $album_img3->getGraphNode();
-            $im=$user3['images'][0];
-            $zip->addFromString($albumIds[$i+1].'/'.$j.'.jpg', file_get_contents($im['source']));
-          }
-          }
-        }
-         $zip->close();
-        echo '<iframe src="download.php?link='.basename($downloadLinks).'" id="ifame" style="display : none"></iframe>';
-      }
 }
   catch(Facebook\Exceptions\FacebookResponseException $e) {
     echo $e->getMessage();
   } catch(Facebook\Exceptions\FacebookSDKException $e) {
     echo 'Facebook SDK returned an error: ' . $e->getMessage();
   }
+
 ?>
   <!DOCTYPE html>
   <html lang="en">
@@ -168,7 +116,7 @@
                       <img class="card-img-top" src="<?php echo $coverPhoto['source'] ?>" alt="Card image cap" onclick="displaySlider('<?php echo $user['albums'][$i]['id']  ?>')">
                       <div class="card-body">
                         <p class="card-text" style="font-size: 18px;">
-                        <input type="checkbox" name="chk" value="<?php echo $user['albums'][$i]['id'].'_'.$user['albums'][$i]['name']  ?>">&nbsp;
+                        <input type="checkbox" name="chk" onClick="onoff()" value="<?php echo $user['albums'][$i]['id'].'_'.$user['albums'][$i]['name']  ?>">&nbsp;
                         <?php echo $user['albums'][$i]['name'] ?></p>
                         <div class="d-flex justify-content-between align-items-center">
                           <div class="btn-group">
@@ -189,17 +137,22 @@
       <div id="btngroup">
         <button type="button" class="btn btn-primary" id="download_seleted" onclick="downloadSelectedAlbums()">Download Selected</button>
         <button  class="btn btn-primary" onclick="downloadAllAlbums()">Download All</button>
-        <button  class="btn btn-primary" onclick="moveSelectedAlbums()">Move Selected</button>
+        <button  class="btn btn-primary" onclick="moveSelectedAlbums()" id="move_selected">Move Selected</button>
         <button  class="btn btn-primary" onclick="moveAllAlbums()">Move All</button>
         <button  class="btn btn-danger" onclick="logout()">Logout</button>
       </div>
 
-      <center style="margin:auto;" class="h-100 row align-items-center">
+      <center class="h-100 row align-items-center">
         <div class="modal fade " id="myModal"> 
-          <div class="modal-dialog" style=" padding-top: 200px">
-            <div class="modal-content" style="width: 230px;">
+          <div class="modal-dialog" style=" padding-top: 180px; width: 100%;">
+            <div class="modal-content">
             <i class="fa fa-spinner fa-spin align-items-center" style="font-size:100px;"></i>
             <h2 id="msg"></h2>
+            <div class="container">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%" id="pbar"></div>
+                </div>
+            </div>
           </div>
           </div>
         </div>
@@ -222,19 +175,17 @@
         </div>
     </div>
 </div>
-
-<form action="" id="myFormSignle" method="get">
-  <input type="hidden" name="albumid" id="newid">
-</form>
-
-<form action="" id="myFormMultiple" method="get">
-  <input type="hidden" name="albumids" id="newids">
-</form>
-
 </body>
 </html>
 <script type="text/javascript">
-  //disableAllButton();
+  disableAllButton();
+  $(document).ready(function() {
+    var f=document.getElementById("ifame");
+    if(f!=null)
+    {
+      window.location="<?php echo DOMAIN ?>";
+    }
+});
   function logout(){
     window.location="logout.php";
   }
@@ -253,15 +204,85 @@
     document.getElementById("download_seleted").disabled = true; 
     document.getElementById("move_selected").disabled = true; 
   }
+  var imageCount=0;
+  var a=0;
+  var downloadcount=0;
+
+  function progressBarInit(){
+    $("#pbar").css("width","0%");
+  }
+  function run(){
+      var increase=100/imageCount;
+      a=a+increase;
+      $("#pbar").css("width",a+"%");
+      ++downloadcount;
+  }
   function downloadAlbum(id){
-    $('#myModal').modal('toggle');
-    var idField=document.getElementById("newid");
-    idField.value=id;
-     document.getElementById("myFormSignle").submit();
+     progressBarInit();
      $('#myModal').modal('toggle');
+     albumid=id;
+     getCount(id);
+     var xx = new XMLHttpRequest();
+        xx.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) 
+          {
+             var x = new XMLHttpRequest();
+             x.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) 
+            {     
+              var arr=this.responseText.split(',');
+              for(var i=0;i<arr.length-1;i++)
+              {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) 
+                {      
+                  run();
+                  if(downloadcount==imageCount)
+                  {
+                    $('#myModal').modal('toggle');
+                    downloadZip();
+                  }
+                }
+                };
+              xhttp.open("GET", "save-image.php?imageid="+arr[i], true);
+              xhttp.send();
+            }
+         }
+        };
+        x.open("GET", "get-imageids.php?albumid="+albumid, true);
+        x.send(); 
+          }     
+       }
+      xx.open("GET", "delete-dir.php", true);
+      xx.send();
+     
+  }
+  function downloadZip(){
+    var x = new XMLHttpRequest();
+    x.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) 
+     {     
+         window.location="<?php echo DOMAIN ?>my-albums.php?download="+this.responseText;
+      }
+      };
+      x.open("GET", "create-zip.php", true);
+      x.send();
+  }
+  function getCount(id){
+     var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) 
+      {      
+        imageCount=parseInt(this.responseText);
+      }
+      };
+    xhttp.open("GET", "get-count.php?albumid="+id, true);
+    xhttp.send();
   }
   function downloadSelectedAlbums(){
-       $('#myModal').modal('toggle');
+      progressBarInit();
+      $('#myModal').modal('toggle');
       var selected_chk=document.querySelectorAll('input[name=chk]:checked');
       var selctedAlbums="";
       var idField=document.getElementById("newids");
@@ -269,26 +290,45 @@
       {
            selctedAlbums=selctedAlbums+selected_chk[i].value+"_";
       }
-
-         idField.value=selctedAlbums;
-         document.getElementById("myFormMultiple").submit();
-         $('#myModal').modal('toggle');
-   
+       getCount(selctedAlbums);
+       var xx = new XMLHttpRequest();
+        xx.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) 
+          {
+             var x = new XMLHttpRequest();
+             x.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) 
+            {     
+              var arr=this.responseText.split(',');
+              for(var i=0;i<arr.length-1;i++)
+              {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) 
+                {      
+                  run();
+                  if(downloadcount==imageCount)
+                  {
+                    $('#myModal').modal('toggle');
+                    downloadZip();
+                  }
+                }
+                };
+              xhttp.open("GET", "save-image.php?imageid="+arr[i], true);
+              xhttp.send();
+            }
+         }
+        };
+        x.open("GET", "get-imageids.php?albumid="+selctedAlbums, true);
+        x.send(); 
+          }     
+       }
+      xx.open("GET", "delete-dir.php", true);
+      xx.send();  
+       
   }
   function downloadAllAlbums(){
-       $('#myModal').modal('toggle');
-    var selected_chk=document.querySelectorAll('input[name=chk]');
-    var selctedAlbums="";
-     var idField=document.getElementById("newids");
-    for(var i=0;i<selected_chk.length;i++)
-    {
-         selctedAlbums=selctedAlbums+selected_chk[i].value+"_";
-    }
-
-         idField.value=selctedAlbums;
-         document.getElementById("myFormMultiple").submit();
-         $('#myModal').modal('toggle');
-   
+       downloadSelectedAlbums();
   }
     function displaySlider(id){
     
