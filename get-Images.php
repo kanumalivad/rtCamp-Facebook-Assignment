@@ -20,9 +20,19 @@ try {
           );
         $graphEdge = $re->getGraphEdge();
 
+        $album_img= $fb->get( '/'.$_GET['albumid'].'?fields=photo_count',$accessToken);
+        $user1 = $album_img->getGraphNode();
+        $count=$user1['photo_count'];
+
         for($i=0;$i<count($graphEdge);$i++)
-        {
         	echo $graphEdge[$i]['id'].',';
+        $count=$count-100;
+        while($count>0)
+         {
+            $nextFeed = $fb->next($graphEdge);
+            for($j=0;$j<count($nextFeed);$j++)
+              echo $nextFeed[$j]['id'].',';
+            $count=$count-100;
         }
 } catch(Facebook\Exceptions\FacebookResponseException $e) {
   echo 'Graph returned an error: ' . $e->getMessage();

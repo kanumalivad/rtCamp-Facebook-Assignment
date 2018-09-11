@@ -26,14 +26,25 @@ require_once('fb-config.php');
           $albumIds=explode("_",$_GET['albumid']);
           for($i=0;$i<count($albumIds)-1;$i+=2)
           {
-
             if($albumIds[$i]!=""){
                 $album_img2= $fb->get('/'.$albumIds[$i].'/photos?limit=500',$accessToken);
                 $user2 = $album_img2->getGraphEdge();
 
-                for($j=0;$j<count($user2);$j++){
-                    echo $albumIds[$i+1]."_".$user2[$j]['id'].',';
-              }
+                $album_img= $fb->get( '/'.$albumIds[$i].'?fields=photo_count',$accessToken);
+                $user1 = $album_img->getGraphNode();
+                $count=$user1['photo_count'];
+
+                    for($a=0;$a<count($user2);$a++)
+                      echo $albumIds[$i+1]."_".$user2[$a]['id'].',';
+                  $count=$count-100;
+                  while($count>0)
+                   {
+                      $nextFeed = $fb->next($user2);
+                      for($j=0;$j<count($nextFeed);$j++)
+                        echo $albumIds[$i+1]."_".$nextFeed[$j]['id'].',';
+                      $count=$count-100;
+                  }
+          
             }
           }
 } catch(Facebook\Exceptions\FacebookResponseException $e) {
